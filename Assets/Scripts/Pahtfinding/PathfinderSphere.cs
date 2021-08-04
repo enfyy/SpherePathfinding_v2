@@ -1,27 +1,37 @@
-using System;
 using System.Collections.Generic;
-using UnityEditor;
+using Pahtfinding;
 using UnityEngine;
 
 public class PathfinderSphere : MonoBehaviour
 {
-    [SerializeField] private MeshFilter meshFilter;
-    [SerializeField] private float radius;
-    [SerializeField] private LayerMask planetLayer;
+    [SerializeField, Tooltip("The MeshFilter of the sphere")]
+    private MeshFilter _meshFilter;
     
-    private List<Node> highlightedNodes;
-    private List<Node> highlightedPath;
-    private List<Node> unwalkableNodes;
+    [SerializeField, Tooltip("The radius of the sphere")]
+    public float Radius;
+    
+    [SerializeField, Tooltip("Layer of the planet")] 
+    private LayerMask _planetLayer;
+    
+    [SerializeField, Tooltip("Node neighbours share: [Vertices || Edges]")] 
+    private NeighbourMode _neighbourMode;
+    
+    [SerializeField, Tooltip("enables/disables drawing the gizmos for the path")]
+    private bool drawDebug;
+    
+    private List<Node> _highlightedNodes;
+    private Path<Node> _highlightedPath;
+    private List<Node> _unwalkableNodes;
 
     private Camera cam;
     
-    private SphereGrid Grid { get; set; }
+    public SphereGrid Grid { get; private set; }
 
     private void Awake()
     {
-        Grid = SphereGrid.Generate(meshFilter, transform, radius);
-        highlightedNodes = new List<Node>();
-        unwalkableNodes = new List<Node>();
+        Grid = SphereGrid.Generate(_meshFilter, transform, Radius, _neighbourMode);
+        _highlightedNodes = new List<Node>();
+        _unwalkableNodes = new List<Node>();
         cam = Camera.main;
     }
 
@@ -31,30 +41,30 @@ public class PathfinderSphere : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Mouse2))
         {
             bool hit = Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out RaycastHit targetHit,
-                Mathf.Infinity, planetLayer);
+                Mathf.Infinity, _planetLayer);
             if (!hit) return;
             
             Node hitNode = Grid.GetNodeFromRayCast(targetHit);
-            if (unwalkableNodes.Contains(hitNode))
+            if (_unwalkableNodes.Contains(hitNode))
             {
-                unwalkableNodes.Remove(hitNode);
+                _unwalkableNodes.Remove(hitNode);
                 hitNode.Walkable = true;
             }
             else
             {
-                unwalkableNodes.Add(hitNode);
+                _unwalkableNodes.Add(hitNode);
                 hitNode.Walkable = false;
             }
         }
     }
 
-    public List<Node> FindPath(RaycastHit start, RaycastHit target)
+    public Path<Node> FindPath(RaycastHit start, RaycastHit target)
     {
         Node s = Grid.GetNodeFromRayCast(start);
         Node t = Grid.GetNodeFromRayCast(target);
-        highlightedNodes.Clear();
-        highlightedNodes.Add(s);
-        highlightedNodes.Add(t);
+        _highlightedNodes.Clear();
+        _highlightedNodes.Add(s);
+        _highlightedNodes.Add(t);
         return FindPath(s, t);
     }
 
@@ -62,7 +72,7 @@ public class PathfinderSphere : MonoBehaviour
     /// Finds the shortest path between the two nodes and returns a list of nodes that make up that path.
     /// First node in the list is the furthest distance from the target & closest to the start.
     /// </summary>
-    public List<Node> FindPath(Node start, Node target)
+    public Path<Node> FindPath(Node start, Node target)
     {
         Heap<Node> open = new Heap<Node>(Grid.NodeCount);
         HashSet<Node> closed = new HashSet<Node>();
@@ -75,21 +85,21 @@ public class PathfinderSphere : MonoBehaviour
 
             if (current == target)
             {
-                highlightedPath?.Clear();
-                highlightedPath = RetracePath(start, target);
-                Debug.Log($"Path found with: {highlightedPath.Count} Nodes");
-                return highlightedPath;
+                _highlightedPath?.Clear();
+                _highlightedPath = RetracePath(start, target);
+                Debug.Log($"Path found with: {_highlightedPath.Count} Nodes");
+                return _highlightedPath;
             }
 
             foreach (Node neighbour in current.Neighbours)
             {
                 if (!neighbour.Walkable || closed.Contains(neighbour)) continue;
 
-                float newMovementCostToNeighbour = current.gCost + current.Distance(neighbour);
-                if (newMovementCostToNeighbour < neighbour.gCost || !open.Contains(neighbour))
+                float newMovementCostToNeighbour = current.GCost + current.Distance(neighbour);
+                if (newMovementCostToNeighbour < neighbour.GCost || !open.Contains(neighbour))
                 {
-                    neighbour.gCost = newMovementCostToNeighbour;
-                    neighbour.hCost = neighbour.Distance(target);
+                    neighbour.GCost = newMovementCostToNeighbour;
+                    neighbour.HCost = neighbour.Distance(target);
                     neighbour.parent = current;
 
                     if (!open.Contains(neighbour))
@@ -98,15 +108,15 @@ public class PathfinderSphere : MonoBehaviour
             }
         }
 
-        return new List<Node>();
+        return new Path<Node>();
     }
     
     /// <summary>
     ///  Retraces the path of traversed nodes from the start node to the end node.
     /// </summary>
-    private List<Node> RetracePath(Node startNode, Node endNode)
+    private Path<Node> RetracePath(Node startNode, Node endNode)
     {
-        List<Node> path = new List<Node>();
+        Path<Node> path = new Path<Node>();
         Node current = endNode;
 
         while (current != startNode)
@@ -129,21 +139,23 @@ public class PathfinderSphere : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (highlightedPath != null)
+        if (!drawDebug) return;
+        
+        if (_highlightedPath != null)
         {
-            foreach (Node n in highlightedPath)
+            foreach (Node n in _highlightedPath)
                 HighlightNode(n, Color.green);
         }
 
-        if (highlightedNodes != null)
+        if (_highlightedNodes != null)
         {
-             foreach (Node n in highlightedNodes)
+             foreach (Node n in _highlightedNodes)
                  HighlightNode(n, Color.blue);
         }
 
-        if (unwalkableNodes != null)
+        if (_unwalkableNodes != null)
         {
-            foreach (Node n in unwalkableNodes)
+            foreach (Node n in _unwalkableNodes)
                 HighlightNode(n, Color.red);
         }
 

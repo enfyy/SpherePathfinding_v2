@@ -136,6 +136,8 @@ GameObject:
   - component: {fileID: 39274805}
   - component: {fileID: 39274804}
   - component: {fileID: 39274809}
+  - component: {fileID: 39274810}
+  - component: {fileID: 39274808}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -213,12 +215,25 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 39274803}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 100.78, z: 1.01}
+  m_LocalPosition: {x: 0, y: 100.546, z: 2.94}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &39274808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 39274803}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c9a3ff167800c8468ac06c1765d0aa4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _attractor: {fileID: 919132149269437834}
 --- !u!114 &39274809
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -231,10 +246,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 479d8bf37f3d9ad499f8c8f8439732ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pathfinder: {fileID: 430340626}
-  planetLayer:
+  _pathfinder: {fileID: 430340626}
+  _planetLayer:
     serializedVersion: 2
     m_Bits: 64
+  _movementSpeed: 44
+  _playerHeight: 0.5
+  planetTransform: {fileID: 543450653459531571}
+--- !u!54 &39274810
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 39274803}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &51105836
 GameObject:
   m_ObjectHideFlags: 0
@@ -472,11 +506,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bda909bfab19e648a2d2f809d625e22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  meshFilter: {fileID: 3469287837443541142}
-  radius: 100
-  planetLayer:
+  _meshFilter: {fileID: 3469287837443541142}
+  Radius: 100
+  _planetLayer:
     serializedVersion: 2
     m_Bits: 64
+  _neighbourMode: 1
+  drawDebug: 1
 --- !u!64 &430340629
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -518,6 +554,7 @@ GameObject:
   - component: {fileID: 1711813855798574172}
   - component: {fileID: 430340629}
   - component: {fileID: 430340626}
+  - component: {fileID: 919132149269437834}
   m_Layer: 6
   m_Name: Planet
   m_TagString: Untagged
@@ -525,6 +562,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &919132149269437834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149269437833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4641e81dd81ee4a44a7609d1fa23826b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!23 &1711813855798574172
 MeshRenderer:
   m_ObjectHideFlags: 0

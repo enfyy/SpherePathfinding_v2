@@ -1,14 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class CameraControl : MonoBehaviour
+public class CameraController : MonoBehaviour
 {
     public Transform planet;
-    // Start is called before the first frame update
-    void Start()
+
+    [SerializeField] private Transform _followTarget;
+    private Vector3 _followPosition;
+    
+    
+    void Awake()
     {
-        
     }
 
     // Update is called once per frame

@@ -11,34 +11,36 @@ public class SphereGrid
 {
     public readonly float OneDegreeDistance;    // Distance of 1/360th of the circumference of the sphere.
     public Vector3 Center { get; }              // Center point of the sphere
-    public Transform transform { get; }         // transform of the GameObject with the mesh.
+    public Transform Transform { get; }         // transform of the GameObject with the mesh.
     public int NodeCount => _nodes.Count;       // returns count of nodes in the grid.
-    
+    public NeighbourMode Mode { get; private set; }
+
     private Dictionary<int, Node> _nodes;       // nodeIndex -> Node
-    private float radius;                       // radius of the sphere.
+    private float _radius;                      // radius of the sphere.
 
     /// <summary>
     /// Constructor
     /// </summary>
-    private SphereGrid(Transform tf, float radius)
+    private SphereGrid(Transform tf, float radius, NeighbourMode mode)
     {
         Center = tf.position;
-        transform = tf;
+        Transform = tf;
         _nodes = new Dictionary<int, Node>();
-        this.radius = radius;
+        this._radius = radius;
         OneDegreeDistance = ((2f * radius * Mathf.PI) / 360f);
+        Mode = mode;
     }
 
     /// <summary>
     /// Generates the Grid and its Nodes from the triangles of the mesh.
     /// </summary>
-    public static SphereGrid Generate(MeshFilter meshFilter, Transform tf, float radius)
+    public static SphereGrid Generate(MeshFilter meshFilter, Transform tf, float radius, NeighbourMode mode = NeighbourMode.Edge)
     {
         Mesh mesh = meshFilter.sharedMesh;
         Vector3[] vertices = mesh.vertices;
         int[] triangles = mesh.GetTriangles(0);
         
-        SphereGrid instance = new SphereGrid(tf, radius);
+        SphereGrid instance = new SphereGrid(tf, radius, mode);
         
         //initialize dictionary of vertexIndex -> triangleIndex
         Dictionary<int, List<int>> vertexIndexToTriangleIndices = new Dictionary<int, List<int>>();
@@ -90,6 +92,7 @@ public class SphereGrid
             {
                 // GET POSITION OF THE VERTEX
                 Vector3 key = vertices[index];
+                
                 // GET INDICES THAT SHARE THAT POSITION
                 List<int> otherVertexIndices = vertexPosToIndices[key];
 
@@ -101,8 +104,25 @@ public class SphereGrid
                 }
             }
             neighbourIndices = neighbourIndices.Distinct().ToList();
-                
             n.Neighbours = neighbourIndices.Select(neighbourIndex => instance.GetNode(neighbourIndex)).Distinct().ToList();
+
+            if (instance.Mode == NeighbourMode.Edge)
+            {
+                List<Node> edgeOnlyNeighbours =
+                    n.Neighbours.Where(x => x.VertexPositions.Intersect(n.VertexPositions).Count() > 1).ToList();
+                n.Neighbours = edgeOnlyNeighbours;
+            }
+
+            switch (instance.Mode)
+            {
+                case NeighbourMode.Edge:
+                    break;
+                case NeighbourMode.Vertex:
+                    break;
+                default:
+                    throw new Exception("Neighbour Mode not defined");
+            }
+            
         }
 
         return instance;
@@ -125,4 +145,21 @@ public class SphereGrid
         if (hit.triangleIndex == -1) throw new Exception("Triangle Index == -1");
         return GetNode(hit.triangleIndex);
     }
+
+    public float DistanceOnSphere(Vector3 first, Vector3 second)
+    {
+        Vector3 firstToCenter  = Center - first;
+        Vector3 secondToCenter = Center - second;
+        return Vector3.Angle(firstToCenter.normalized, secondToCenter.normalized) * OneDegreeDistance;
+    }
+}
+
+/// <summary>
+/// Neighbour mode : vertex -> this means nodes on the grid are neighbours when they share a vertex
+/// Neighbour mode : edge -> this means nodes on the grid are neighbours when they share an edge
+/// </summary>
+public enum NeighbourMode
+{
+    Vertex,
+    Edge
 }
